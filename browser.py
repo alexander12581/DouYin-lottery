@@ -26,6 +26,7 @@ class BrowserManager:
         self.video_url = video_url
         self._captured_context: RequestContext | None = None
         self._capture_done = False
+        self._browser_context = None
 
     def _on_request(self, request: Request):
         """Callback for intercepted network requests."""
@@ -43,8 +44,8 @@ class BrowserManager:
         headers.pop(":authority", None)
         headers.pop(":scheme", None)
 
-        # Extract cookies from the browser context
-        cookies_list = request.context.cookies()
+        # Extract cookies from the browser context (stored separately)
+        cookies_list = self._browser_context.cookies()
         cookies = {c["name"]: c["value"] for c in cookies_list}
 
         aweme_id = extract_aweme_id_from_url(request.url)
@@ -98,6 +99,7 @@ class BrowserManager:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)
             context = browser.new_context()
+            self._browser_context = context
             page = context.new_page()
 
             page.on("request", self._on_request)
