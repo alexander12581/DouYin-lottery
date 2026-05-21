@@ -36,19 +36,21 @@ def install_chromium():
     print("首次运行，需要下载 Chromium 浏览器（约100MB）...")
     print("正在下载，请稍候...")
     try:
+        from playwright._impl._driver import compute_driver_executable
+        driver_executable = compute_driver_executable()
         result = subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            capture_output=True,
-            text=True,
+            [str(driver_executable), "install", "chromium"],
+            capture_output=False,
         )
         if result.returncode == 0:
             print("Chromium 下载完成！")
             return True
         else:
-            print(f"下载失败: {result.stderr}")
+            print("下载失败，请手动执行: playwright install chromium")
             return False
     except Exception as e:
         print(f"下载失败: {e}")
+        print("请手动执行: playwright install chromium")
         return False
 
 
