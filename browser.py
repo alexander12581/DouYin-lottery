@@ -59,7 +59,7 @@ class BrowserManager:
         logger.info(f"Captured context for aweme_id={aweme_id}")
 
     def _wait_for_login(self, page):
-        """Wait for user to log in. Returns True if login detected, False if timeout."""
+        """Wait for user to log in by polling for comment requests."""
         print("\n" + "=" * 50)
         print("  浏览器已打开，请在浏览器中登录抖音账号")
         print("  登录后工具会自动继续...")
@@ -68,28 +68,12 @@ class BrowserManager:
 
         deadline = time.time() + LOGIN_WAIT_TIMEOUT
         while time.time() < deadline:
-            # Check if login elements are gone (logged in) or comment area is visible
+            if self._capture_done:
+                return True
             try:
-                # If we can find comment-related elements, user is likely logged in
-                has_login_popup = page.evaluate("""
-                    () => {
-                        const loginModal = document.querySelector('[class*="login"]') ||
-                                          document.querySelector('[class*="Login"]');
-                        return loginModal !== null;
-                    }
-                """)
-                if not has_login_popup:
-                    # No login popup visible, might be logged in
-                    # Scroll down to trigger comments
-                    page.evaluate("window.scrollTo(0, 300)")
-                    page.wait_for_timeout(1000)
-
-                    # Check again for comment request after scrolling
-                    if self._capture_done:
-                        return True
+                page.evaluate("window.scrollTo(0, 300)")
             except Exception:
                 pass
-
             page.wait_for_timeout(2000)
 
         return self._capture_done

@@ -79,6 +79,7 @@ class DouyinCommentClient:
 
         while True:
             page += 1
+            print(f"  正在获取第 {page} 页评论 (cursor={cursor})...")
             logger.info(f"Fetching page {page}, cursor={cursor}")
             try:
                 data = self.fetch_page(cursor=cursor, count=count)
@@ -91,7 +92,7 @@ class DouyinCommentClient:
 
             users, cursor, has_more = parse_comment_response(data)
             all_users.extend(users)
-            logger.info(f"Got {len(users)} comments, total so far: {len(all_users)}")
+            print(f"  获取到 {len(users)} 条评论，累计: {len(all_users)} 条")
 
             if not has_more:
                 break

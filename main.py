@@ -37,9 +37,10 @@ def main():
         logger.error(str(e))
         sys.exit(1)
 
-    logger.info(f"Signature captured. Fetching comments for video {ctx.aweme_id}...")
+    print(f"\n签名获取成功！正在获取视频 {ctx.aweme_id} 的评论...\n")
 
     # Step 2: Fetch all comments
+    print("正在请求评论API...")
     try:
         with DouyinCommentClient(
             headers=ctx.headers,
@@ -49,6 +50,8 @@ def main():
             all_comments = client.fetch_all_comments()
     except Exception as e:
         logger.error(f"Failed to fetch comments: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
     logger.info(f"Total comments fetched: {len(all_comments)}")
