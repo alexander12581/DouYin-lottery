@@ -1,46 +1,78 @@
-import argparse
 import logging
+import random
 import sys
+import time
+
+import colorama
 
 from url_parser import extract_aweme_id
 from browser import BrowserManager
 from api import DouyinCommentClient
 from lottery import draw_lucky_users
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger(__name__)
+colorama.init()
+GREEN = colorama.Fore.GREEN
+RESET = colorama.Style.RESET_ALL
+
+logging.basicConfig(level=logging.WARNING)
+
+
+def print_banner():
+    print("=" * 50)
+    print("      抖音评论区幸运用户抽取工具")
+    print("=" * 50)
+    print()
+
+
+def scroll_animation(all_nicknames, final_nickname, rounds=12):
+    """Scrolling effect: rapidly display random names, slow down, land on final."""
+    for i in range(rounds):
+        name = random.choice(all_nicknames)
+        delay = 0.05 + (i / rounds) * 0.25
+        sys.stdout.write(f"\r    {name}  ")
+        sys.stdout.flush()
+        time.sleep(delay)
+    sys.stdout.write(f"\r    {GREEN}★ {final_nickname} ★{RESET}  \n")
+    sys.stdout.flush()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="抖音评论区幸运用户抽取工具")
-    parser.add_argument("url", help="抖音视频URL")
-    parser.add_argument("--count", type=int, default=5, help="抽取人数 (默认: 5)")
-    args = parser.parse_args()
+    print_banner()
 
-    # Validate URL
-    try:
-        aweme_id = extract_aweme_id(args.url)
-        logger.info(f"Extracted aweme_id: {aweme_id}")
-    except ValueError as e:
-        logger.error(str(e))
+    # Step 1: Get user input
+    url = input("请输入抖音视频链接: ").strip()
+    if not url:
+        print("链接不能为空！")
         sys.exit(1)
 
-    # Step 1: Open browser and intercept signatures
-    logger.info("Opening browser... Please log in if needed.")
-    browser = BrowserManager(args.url)
+    try:
+        extract_aweme_id(url)
+    except ValueError:
+        print("无法识别的抖音链接，请检查后重试。")
+        sys.exit(1)
+
+    count_input = input("请输入抽取人数: ").strip()
+    try:
+        count = int(count_input)
+        if count <= 0:
+            raise ValueError
+    except ValueError:
+        print("请输入有效的正整数！")
+        sys.exit(1)
+
+    # Step 2: Open browser and intercept signatures
+    print()
+    print("正在打开浏览器，请登录抖音...")
+    browser = BrowserManager(url)
     try:
         ctx = browser.capture_request_context()
     except RuntimeError as e:
-        logger.error(str(e))
+        print(f"错误: {e}")
         sys.exit(1)
 
-    print(f"\n签名获取成功！正在获取视频 {ctx.aweme_id} 的评论...\n")
-
-    # Step 2: Fetch all comments
-    print("正在请求评论API...")
+    # Step 3: Fetch all comments
+    print()
+    print("正在获取全部评论...")
     try:
         with DouyinCommentClient(
             headers=ctx.headers,
@@ -50,33 +82,37 @@ def main():
         ) as client:
             all_comments = client.fetch_all_comments()
     except Exception as e:
-        logger.error(f"Failed to fetch comments: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"获取评论失败: {e}")
         sys.exit(1)
 
-    logger.info(f"Total comments fetched: {len(all_comments)}")
-
-    # Step 3: Draw lucky users
     if not all_comments:
-        logger.error("No comments found.")
+        print("没有找到任何评论。")
         sys.exit(1)
 
-    try:
-        winners = draw_lucky_users(all_comments, count=args.count)
-    except ValueError as e:
-        logger.error(str(e))
-        sys.exit(1)
+    print()
+    print(f"评论已获取完毕，共 {len(all_comments)} 条评论。")
+    input("请按下回车开始抽奖...")
 
-    # Step 4: Display results
-    print("\n" + "=" * 50)
-    print(f"  恭喜以下 {len(winners)} 位幸运用户！")
+    # Step 4: Draw and display winners one by one
+    winners = draw_lucky_users(all_comments, count=count)
+    all_nicknames = list({u.nickname for u in all_comments})
+
+    print()
     print("=" * 50)
     for i, winner in enumerate(winners, 1):
-        print(f"\n  [{i}] {winner.nickname}")
-        print(f"      评论: {winner.comment_text}")
-        print(f"      主页: {winner.homepage_url}")
-    print("\n" + "=" * 50)
+        print(f"\n--- 第 {i} 位幸运用户 ---")
+        time.sleep(0.3)
+        scroll_animation(all_nicknames, winner.nickname)
+        print(f"    评论: {winner.comment_text}")
+        print(f"    主页: {winner.homepage_url}")
+        time.sleep(0.5)
+
+    print()
+    print("=" * 50)
+    print(f"  抽奖完成！共抽取 {len(winners)} 位幸运用户")
+    print("=" * 50)
+    print()
+    input("按回车退出...")
 
 
 if __name__ == "__main__":
