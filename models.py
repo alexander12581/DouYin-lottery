@@ -15,4 +15,5 @@ class CommentUser:
 class RequestContext:
     headers: dict
     cookies: dict
+    params: dict
     aweme_id: str

@@ -39,9 +39,10 @@ def parse_comment_response(data: dict) -> tuple[list[CommentUser], int, bool]:
 class DouyinCommentClient:
     """Fetches all comments for a Douyin video using intercepted signatures."""
 
-    def __init__(self, headers: dict, cookies: dict, aweme_id: str):
+    def __init__(self, headers: dict, cookies: dict, params: dict, aweme_id: str):
         self.headers = headers
         self.cookies = cookies
+        self.base_params = params
         self.aweme_id = aweme_id
         self._client: Optional[httpx.Client] = None
 
@@ -57,15 +58,9 @@ class DouyinCommentClient:
 
     def fetch_page(self, cursor: int = 0, count: int = DEFAULT_COUNT) -> dict:
         """Fetch a single page of comments."""
-        params = {
-            "device_platform": "webapp",
-            "aid": "6383",
-            "channel": "channel_pc_web",
-            "aweme_id": self.aweme_id,
-            "cursor": str(cursor),
-            "count": str(count),
-            "item_type": "0",
-        }
+        params = dict(self.base_params)
+        params["cursor"] = str(cursor)
+        params["count"] = str(count)
         client = self._get_client()
         resp = client.get(COMMENT_LIST_URL, params=params)
         resp.raise_for_status()

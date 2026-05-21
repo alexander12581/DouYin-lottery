@@ -45,6 +45,7 @@ def main():
         with DouyinCommentClient(
             headers=ctx.headers,
             cookies=ctx.cookies,
+            params=ctx.params,
             aweme_id=ctx.aweme_id,
         ) as client:
             all_comments = client.fetch_all_comments()

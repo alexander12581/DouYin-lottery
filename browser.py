@@ -1,5 +1,6 @@
 import logging
 import time
+from urllib.parse import urlparse, parse_qs
 from playwright.sync_api import sync_playwright, Request
 
 from models import RequestContext
@@ -48,11 +49,17 @@ class BrowserManager:
         cookies_list = self._browser_context.cookies()
         cookies = {c["name"]: c["value"] for c in cookies_list}
 
-        aweme_id = extract_aweme_id_from_url(request.url)
+        # Extract query parameters (a_bogus, msToken, etc.)
+        parsed = urlparse(request.url)
+        raw_params = parse_qs(parsed.query)
+        params = {k: v[0] for k, v in raw_params.items()}
+
+        aweme_id = params.get("aweme_id", "")
 
         self._captured_context = RequestContext(
             headers=headers,
             cookies=cookies,
+            params=params,
             aweme_id=aweme_id,
         )
         self._capture_done = True
