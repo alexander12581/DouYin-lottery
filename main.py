@@ -1,9 +1,12 @@
 import logging
 import random
+import subprocess
 import sys
 import time
+from pathlib import Path
 
 import colorama
+from playwright.sync_api import sync_playwright
 
 from url_parser import extract_aweme_id
 from browser import BrowserManager
@@ -15,6 +18,38 @@ GREEN = colorama.Fore.GREEN
 RESET = colorama.Style.RESET_ALL
 
 logging.basicConfig(level=logging.WARNING)
+
+
+def check_chromium():
+    """Check if Playwright Chromium is installed, auto-download if not."""
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            browser.close()
+        return True
+    except Exception:
+        return False
+
+
+def install_chromium():
+    """Download Playwright Chromium browser."""
+    print("首次运行，需要下载 Chromium 浏览器（约100MB）...")
+    print("正在下载，请稍候...")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print("Chromium 下载完成！")
+            return True
+        else:
+            print(f"下载失败: {result.stderr}")
+            return False
+    except Exception as e:
+        print(f"下载失败: {e}")
+        return False
 
 
 def print_banner():
@@ -38,6 +73,13 @@ def scroll_animation(all_nicknames, final_nickname, rounds=12):
 
 def main():
     print_banner()
+
+    # Check Chromium
+    if not check_chromium():
+        if not install_chromium():
+            print("无法运行，请手动执行: playwright install chromium")
+            sys.exit(1)
+        print()
 
     # Step 1: Get user input
     url = input("请输入抖音视频链接: ").strip()
