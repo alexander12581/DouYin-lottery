@@ -1,14 +1,12 @@
+import os
+import shutil
 import PyInstaller.__main__
 
+# Clean previous builds
+for d in ['build', 'dist']:
+    if os.path.exists(d):
+        shutil.rmtree(d)
+
 PyInstaller.__main__.run([
-    'main.py',
-    '--onefile',
-    '--name=douyin_lottery',
-    '--console',
-    '--paths=.',
-    '--hidden-import=url_parser',
-    '--hidden-import=api',
-    '--hidden-import=browser',
-    '--hidden-import=lottery',
-    '--hidden-import=models',
+    'douyin_lottery.spec',
 ])

@@ -31,15 +31,30 @@ def check_chromium():
         return False
 
 
+def _find_driver():
+    """Find Playwright node.exe and cli.js paths."""
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller exe - driver is bundled in _MEIPASS
+        base = Path(sys._MEIPASS)
+        node = base / "playwright" / "driver" / "node.exe"
+        cli = base / "playwright" / "driver" / "package" / "cli.js"
+        if node.exists() and cli.exists():
+            return str(node), str(cli)
+
+    # Normal Python environment
+    from playwright._impl._driver import compute_driver_executable
+    node, cli = compute_driver_executable()
+    return str(node), str(cli)
+
+
 def install_chromium():
     """Download Playwright Chromium browser."""
     print("首次运行，需要下载 Chromium 浏览器（约100MB）...")
     print("正在下载，请稍候...")
     try:
-        from playwright._impl._driver import compute_driver_executable
-        node_exe, cli_js = compute_driver_executable()
+        node_exe, cli_js = _find_driver()
         result = subprocess.run(
-            [str(node_exe), str(cli_js), "install", "chromium"],
+            [node_exe, cli_js, "install", "chromium"],
             capture_output=False,
         )
         if result.returncode == 0:
