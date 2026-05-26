@@ -68,8 +68,8 @@ class BrowserManager:
     def _wait_for_login(self, page):
         """Wait for user to log in by polling for comment requests."""
         print("\n" + "=" * 50)
-        print("  浏览器已打开，请在浏览器中登录抖音账号")
-        print("  登录后工具会自动继续...")
+        print("  浏览器已打开，请在浏览器中打开评论区")
+        print("  工具会自动拦截评论数据并继续...")
         print("  (等待最多 5 分钟)")
         print("=" * 50 + "\n")
 

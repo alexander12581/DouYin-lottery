@@ -173,26 +173,36 @@ def main():
 
         print()
         print(f"评论已获取完毕，共 {len(all_comments)} 条评论。")
-        input("请按下回车开始抽奖...")
-
-        # Step 4: Draw and display winners one by one
-        winners = draw_lucky_users(all_comments, count=count)
         all_nicknames = list({u.nickname for u in all_comments})
 
-        print()
-        print("=" * 50)
-        for i, winner in enumerate(winners, 1):
-            print(f"\n--- 第 {i} 位幸运用户 ---")
-            time.sleep(0.3)
-            scroll_animation(all_nicknames, winner.nickname)
-            print(f"    评论: {winner.comment_text}")
-            print(f"    主页: {winner.homepage_url}")
-            time.sleep(0.5)
+        # Step 4: Draw loop — can re-draw without re-fetching comments
+        while True:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print_banner()
+            input("请按下回车开始抽奖...")
 
-        print()
-        print("=" * 50)
-        print(f"  抽奖完成！共抽取 {len(winners)} 位幸运用户")
-        print("=" * 50)
+            winners = draw_lucky_users(all_comments, count=count)
+
+            print()
+            print("=" * 50)
+            for i, winner in enumerate(winners, 1):
+                print(f"\n--- 第 {i} 位幸运用户 ---")
+                time.sleep(0.3)
+                scroll_animation(all_nicknames, winner.nickname)
+                print(f"    评论: {winner.comment_text}")
+                print(f"    主页: {winner.homepage_url}")
+                time.sleep(0.5)
+
+            print()
+            print("=" * 50)
+            print(f"  抽奖完成！共抽取 {len(winners)} 位幸运用户")
+            print("=" * 50)
+            print()
+            choice = input("按回车重新抽奖，输入 q 退出: ").strip().lower()
+            if choice == 'q':
+                break
+            print()
+
         pause()
 
     except Exception as e:
